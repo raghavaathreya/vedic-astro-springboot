@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.model.KundliResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
@@ -11,10 +12,12 @@ import java.util.Map;
 @Service
 public class AstrologyService {
 
-@Autowired
-private GroqService groqService;
+    @Autowired
+    private GroqService groqService;
 
-    private final String PYTHON_API_URL = "http://localhost:5000/calculate";
+    // Inject Python API URL from application.properties
+    @Value("${python.api.url}")
+    private String PYTHON_API_URL;
 
     public KundliResponse calculateKundli(
         int year, int month, int day,
@@ -33,6 +36,9 @@ private GroqService groqService;
         
         HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
         
+        System.out.println("=== CALLING PYTHON API ===");
+        System.out.println("URL: " + PYTHON_API_URL);
+        
         ResponseEntity<KundliResponse> response = restTemplate.exchange(
             PYTHON_API_URL,
             HttpMethod.POST,
@@ -42,9 +48,9 @@ private GroqService groqService;
         
         KundliResponse kundliResponse = response.getBody();
         
-        // THIS SECTION SHOULD BE HERE - Generate AI insights
+        // Generate AI insights
         try {
-            System.out.println("=== CALLING OPENAI SERVICE ===");
+            System.out.println("=== CALLING GROQ SERVICE ===");
             System.out.println("Rashi: " + kundliResponse.getRashi());
             System.out.println("Nakshatra: " + kundliResponse.getNakshatra());
             System.out.println("Lagna: " + kundliResponse.getLagna());
