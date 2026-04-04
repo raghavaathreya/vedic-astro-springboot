@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import java.time.Duration;
 
 import java.util.Map;
 
@@ -24,7 +26,11 @@ public class AstrologyService {
         int hour, int minute,
         double latitude, double longitude
     ) {
-        RestTemplate restTemplate = new RestTemplate();
+        // Create RestTemplate with increased timeout for Render free tier wake-up
+        RestTemplate restTemplate = new RestTemplateBuilder()
+            .setConnectTimeout(Duration.ofSeconds(60))
+            .setReadTimeout(Duration.ofSeconds(60))
+            .build();
         
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -38,6 +44,7 @@ public class AstrologyService {
         
         System.out.println("=== CALLING PYTHON API ===");
         System.out.println("URL: " + PYTHON_API_URL);
+        System.out.println("Request: " + requestBody);
         
         ResponseEntity<KundliResponse> response = restTemplate.exchange(
             PYTHON_API_URL,
@@ -48,12 +55,13 @@ public class AstrologyService {
         
         KundliResponse kundliResponse = response.getBody();
         
+        System.out.println("=== PYTHON API RESPONSE RECEIVED ===");
+        System.out.println("Rashi: " + kundliResponse.getRashi());
+        System.out.println("Nakshatra: " + kundliResponse.getNakshatra());
+        
         // Generate AI insights
         try {
             System.out.println("=== CALLING GROQ SERVICE ===");
-            System.out.println("Rashi: " + kundliResponse.getRashi());
-            System.out.println("Nakshatra: " + kundliResponse.getNakshatra());
-            System.out.println("Lagna: " + kundliResponse.getLagna());
             
             Map<String, Object> aiInsights = groqService.generateKundliInsights(
                 kundliResponse.getRashi(),
@@ -63,12 +71,12 @@ public class AstrologyService {
             );
             
             System.out.println("AI Insights generated successfully!");
-            System.out.println("Insights: " + aiInsights);
             
             kundliResponse.setAiInsights(aiInsights);
         } catch (Exception e) {
             System.err.println("=== AI INSIGHTS GENERATION FAILED ===");
             e.printStackTrace();
+            // Continue without AI insights - don't fail the whole request
         }
         
         return kundliResponse;
