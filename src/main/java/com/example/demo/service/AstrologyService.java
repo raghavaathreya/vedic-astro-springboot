@@ -8,6 +8,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import java.time.Duration;
+import javax.annotation.PostConstruct;
 
 import java.util.Map;
 
@@ -17,16 +18,22 @@ public class AstrologyService {
     @Autowired
     private GroqService groqService;
 
-    // Inject Python API URL from application.properties
     @Value("${python.api.url}")
     private String PYTHON_API_URL;
+
+    // ADD THIS METHOD - Logs the URL when service starts
+    @PostConstruct
+    public void init() {
+        System.out.println("========================================");
+        System.out.println("PYTHON_API_URL configured as: " + PYTHON_API_URL);
+        System.out.println("========================================");
+    }
 
     public KundliResponse calculateKundli(
         int year, int month, int day,
         int hour, int minute,
         double latitude, double longitude
     ) {
-        // Create RestTemplate with increased timeout for Render free tier wake-up
         RestTemplate restTemplate = new RestTemplateBuilder()
             .setConnectTimeout(Duration.ofSeconds(60))
             .setReadTimeout(Duration.ofSeconds(60))
@@ -46,29 +53,17 @@ public class AstrologyService {
         System.out.println("URL: " + PYTHON_API_URL);
         System.out.println("Request: " + requestBody);
         
-            ResponseEntity<KundliResponse> response;
-        try {
-            response = restTemplate.exchange(
-                PYTHON_API_URL,
-                HttpMethod.POST,
-                request,
-                KundliResponse.class
-            );
-            System.out.println("=== PYTHON API CALL SUCCESSFUL ===");
-        } catch (Exception e) {
-            System.err.println("=== PYTHON API CALL FAILED ===");
-            System.err.println("Error: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        ResponseEntity<KundliResponse> response = restTemplate.exchange(
+            PYTHON_API_URL,
+            HttpMethod.POST,
+            request,
+            KundliResponse.class
+        );
         
         KundliResponse kundliResponse = response.getBody();
         
         System.out.println("=== PYTHON API RESPONSE RECEIVED ===");
-        System.out.println("Rashi: " + kundliResponse.getRashi());
-        System.out.println("Nakshatra: " + kundliResponse.getNakshatra());
         
-        // Generate AI insights
         try {
             System.out.println("=== CALLING GROQ SERVICE ===");
             
@@ -80,12 +75,10 @@ public class AstrologyService {
             );
             
             System.out.println("AI Insights generated successfully!");
-            
             kundliResponse.setAiInsights(aiInsights);
         } catch (Exception e) {
             System.err.println("=== AI INSIGHTS GENERATION FAILED ===");
             e.printStackTrace();
-            // Continue without AI insights - don't fail the whole request
         }
         
         return kundliResponse;
