@@ -6,9 +6,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import java.time.Duration;
-import jakarta.annotation.PostConstruct;  // ← CHANGED THIS
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import jakarta.annotation.PostConstruct;
 
 import java.util.Map;
 
@@ -33,10 +32,12 @@ public class AstrologyService {
         int hour, int minute,
         double latitude, double longitude
     ) {
-        RestTemplate restTemplate = new RestTemplateBuilder()
-            .setConnectTimeout(Duration.ofSeconds(60))
-            .setReadTimeout(Duration.ofSeconds(60))
-            .build();
+        // Create RestTemplate with timeout
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(60000); // 60 seconds
+        requestFactory.setReadTimeout(60000); // 60 seconds
+        
+        RestTemplate restTemplate = new RestTemplate(requestFactory);
         
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
