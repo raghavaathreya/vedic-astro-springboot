@@ -46,12 +46,21 @@ public class AstrologyService {
         System.out.println("URL: " + PYTHON_API_URL);
         System.out.println("Request: " + requestBody);
         
-        ResponseEntity<KundliResponse> response = restTemplate.exchange(
-            PYTHON_API_URL,
-            HttpMethod.POST,
-            request,
-            KundliResponse.class
-        );
+            ResponseEntity<KundliResponse> response;
+        try {
+            response = restTemplate.exchange(
+                PYTHON_API_URL,
+                HttpMethod.POST,
+                request,
+                KundliResponse.class
+            );
+            System.out.println("=== PYTHON API CALL SUCCESSFUL ===");
+        } catch (Exception e) {
+            System.err.println("=== PYTHON API CALL FAILED ===");
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
         
         KundliResponse kundliResponse = response.getBody();
         
