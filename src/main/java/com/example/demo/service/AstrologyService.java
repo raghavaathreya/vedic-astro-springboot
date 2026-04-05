@@ -8,7 +8,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import java.time.Duration;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;  // ← CHANGED THIS
 
 import java.util.Map;
 
@@ -21,7 +21,6 @@ public class AstrologyService {
     @Value("${python.api.url}")
     private String PYTHON_API_URL;
 
-    // ADD THIS METHOD - Logs the URL when service starts
     @PostConstruct
     public void init() {
         System.out.println("========================================");
